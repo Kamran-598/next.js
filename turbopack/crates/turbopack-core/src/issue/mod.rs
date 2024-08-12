@@ -12,8 +12,8 @@ use async_trait::async_trait;
 use auto_hash_map::AutoSet;
 use serde::Serialize;
 use turbo_tasks::{
-    emit, CollectiblesSource, RawVc, RcStr, ReadRef, TransientInstance, TransientValue,
-    TryJoinIterExt, Upcast, ValueToString, Vc,
+    debug::ValueDebugFormat, emit, CollectiblesSource, RawVc, RcStr, ReadRef, TransientInstance,
+    TransientValue, TryJoinIterExt, Upcast, ValueToString, Vc,
 };
 use turbo_tasks_fs::{FileContent, FileLine, FileLinesContent, FileSystemPath};
 use turbo_tasks_hash::{DeterministicHash, Xxh3Hash64Hasher};
@@ -535,11 +535,17 @@ impl IssueSource {
 
 async fn source_pos(source: Vc<Box<dyn Source>>, line: usize, col: usize) -> Result<SourcePos> {
     let srcmap = Vc::try_resolve_sidecast::<Box<dyn GenerateSourceMap>>(source).await?;
-    let srcmap = srcmap.map(|v| v.generate_source_map());
+    let srcmap = srcmap.map(|v| {
+        dbg!();
+        v.generate_source_map()
+    });
 
     if let Some(srcmap) = srcmap {
+        dbg!();
         if let Some(srcmap) = *srcmap.await? {
+            dbg!();
             let token = srcmap.lookup_token(line as _, col as _).await?;
+            dbg!(&*token);
 
             return match &*token {
                 crate::source_map::Token::Synthetic(t) => Ok(SourcePos {

@@ -3,7 +3,8 @@ use indexmap::indexmap;
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
 use turbo_tasks::{
-    trace::TraceRawVcs, Completion, Completions, RcStr, TaskInput, TryFlatJoinIterExt, Value, Vc,
+    debug::ValueDebugFormat, trace::TraceRawVcs, Completion, Completions, RcStr, TaskInput,
+    TryFlatJoinIterExt, Value, Vc,
 };
 use turbo_tasks_bytes::stream::SingleValue;
 use turbo_tasks_fs::{
@@ -21,6 +22,7 @@ use turbopack_core::{
     reference_type::{EntryReferenceSubType, InnerAssets, ReferenceType},
     resolve::{find_context_file, options::ImportMapping, FindContextFileResult},
     source::Source,
+    source_map::{GenerateSourceMap, OptionSourceMap, SourceMap},
     source_transform::SourceTransform,
     virtual_source::VirtualSource,
 };
@@ -313,6 +315,22 @@ async fn find_config_in_location(
     }
 
     Ok(None)
+}
+
+#[turbo_tasks::value_impl]
+impl GenerateSourceMap for PostCssTransformedAsset {
+    #[turbo_tasks::function]
+    async fn generate_source_map(&self) -> Result<Vc<OptionSourceMap>> {
+        eprintln!(
+            "{}",
+            self.source.value_debug_format(5).try_to_string().await?
+        );
+        let source = Vc::try_resolve_sidecast::<Box<dyn GenerateSourceMap>>(self.source).await?;
+        match source {
+            Some(source) => Ok(source.generate_source_map()),
+            None => Ok(Vc::cell(None)),
+        }
+    }
 }
 
 #[turbo_tasks::value_impl]
