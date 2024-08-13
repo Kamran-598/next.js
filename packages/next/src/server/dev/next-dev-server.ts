@@ -170,7 +170,7 @@ export default class DevServer extends Server {
       // 5MB
       max: 5 * 1024 * 1024,
       length(value) {
-        return JSON.stringify(value.staticPaths).length
+        return JSON.stringify(value.staticPaths)?.length ?? 0
       },
     })
     this.renderOpts.ampSkipValidation =
@@ -787,7 +787,7 @@ export default class DevServer extends Server {
       []
     )
       .then((res) => {
-        const { prerenderedRoutes: staticPaths = [], fallback } = res.value
+        const { prerenderedRoutes: staticPaths, fallback } = res.value
         if (!isAppPath && this.nextConfig.output === 'export') {
           if (fallback === FallbackMode.BLOCKING_RENDER) {
             throw new Error(
@@ -801,10 +801,10 @@ export default class DevServer extends Server {
         }
 
         const value: {
-          staticPaths: string[]
+          staticPaths: string[] | undefined
           fallbackMode: FallbackMode
         } = {
-          staticPaths: staticPaths.map((route) => route.path),
+          staticPaths: staticPaths?.map((route) => route.path),
           fallbackMode: fallback ?? FallbackMode.NOT_FOUND,
         }
         this.staticPathsCache.set(pathname, value)
