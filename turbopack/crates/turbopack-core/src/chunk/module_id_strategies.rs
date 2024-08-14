@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
-use turbo_tasks::{debug::ValueDebug, ValueToString, Vc};
+use turbo_tasks::{ValueToString, Vc};
 use turbo_tasks_hash::hash_xxh3_hash64;
 
 use super::ModuleId;
@@ -46,10 +46,10 @@ impl ModuleIdStrategy for GlobalModuleIdStrategy {
     #[turbo_tasks::function]
     async fn get_module_id(self: Vc<Self>, ident: Vc<AssetIdent>) -> Result<Vc<ModuleId>> {
         if let Some(module_id) = self.await?.module_id_map.get(&ident.await?.clone_value()) {
-            dbg!("Hit", ident.to_string().await?, (*module_id).dbg().await?);
+            dbg!(format!("Hit {}", ident.to_string().await?));
             return Ok(*module_id);
         }
-        dbg!("Miss", ident.to_string().await?);
+        dbg!(format!("Miss {}", ident.to_string().await?));
         Ok(ModuleId::String(
             hash_xxh3_hash64(ident.to_string().await?)
                 .to_string()
